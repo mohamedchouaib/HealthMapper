@@ -1,0 +1,90 @@
+version: '3.8'
+
+services:
+  # GraphQL Gateway - Point d'entrée unique (Spring Boot)
+  graphql-gateway:
+    build:
+      context: ./services/graphql-gateway
+      dockerfile: Dockerfile
+    container_name: graphql-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - HEALTH_PLANNER_URL=http://health-planner:8001
+      - ROUTING_SERVICE_URL=http://routing-service:8002
+      - NAOLIB_SERVICE_URL=http://naolib-service:8003
+      - WEATHER_SERVICE_URL=http://weather-service:8004
+    depends_on:
+      - health-planner
+      - routing-service
+      - naolib-service
+      - weather-service
+    networks:
+      - healthroute-network
+
+  # Health Planner Service - Cerveau de l'orchestration (FastAPI)
+  health-planner:
+    build:
+      context: ./services/health-planner
+      dockerfile: Dockerfile
+    container_name: health-planner
+    ports:
+      - "8001:8001"
+    environment:
+      - ROUTING_SERVICE_URL=http://routing-service:8002
+      - NAOLIB_SERVICE_URL=http://naolib-service:8003
+    volumes:
+      - ./services/health-planner/data:/app/data
+    depends_on:
+      - routing-service
+      - naolib-service
+    networks:
+      - healthroute-network
+
+  # Routing Service - Calcul d'itinéraires (FastAPI)
+  routing-service:
+    build:
+      context: ./services/routing-service
+      dockerfile: Dockerfile
+    container_name: routing-service
+    ports:
+      - "8002:8002"
+    environment:
+      - EXTERNAL_ROUTING_API_KEY=${ROUTING_API_KEY}
+    networks:
+      - healthroute-network
+
+  # Naolib Mobility Service - Données mobilité Nantes (FastAPI)
+  naolib-service:
+    build:
+      context: ./services/naolib-service
+      dockerfile: Dockerfile
+    container_name: naolib-service
+    ports:
+      - "8003:8003"
+    environment:
+      - NAOLIB_API_KEY=${NAOLIB_API_KEY}
+    volumes:
+      - ./services/naolib-service/data:/app/data
+    networks:
+      - healthroute-network
+
+  # Weather Service - Décision météo (FastAPI)
+  weather-service:
+    build:
+      context: ./services/weather-service
+      dockerfile: Dockerfile
+    container_name: weather-service
+    ports:
+      - "8004:8004"
+    environment:
+      - WEATHER_API_KEY=${WEATHER_API_KEY}
+    volumes:
+      - ./services/weather-service/data:/app/data
+    networks:
+      - healthroute-network
+
+networks:
+  healthroute-network:
+    driver: bridge

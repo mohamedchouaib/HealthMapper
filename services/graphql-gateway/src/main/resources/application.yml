@@ -1,0 +1,49 @@
+spring:
+  application:
+    name: graphql-gateway
+  graphql:
+    graphiql:
+      enabled: true
+      path: /graphiql
+    path: /graphql
+
+server:
+  port: 8080
+
+# URLs des services internes
+services:
+  health-planner:
+    url: ${HEALTH_PLANNER_URL:http://localhost:8001}
+    timeout: 3000
+  routing:
+    url: ${ROUTING_SERVICE_URL:http://localhost:8002}
+    timeout: 2000
+  naolib:
+    url: ${NAOLIB_SERVICE_URL:http://localhost:8003}
+    timeout: 2000
+  weather:
+    url: ${WEATHER_SERVICE_URL:http://localhost:8004}
+    timeout: 2000
+
+# Circuit Breaker configuration
+resilience4j:
+  circuitbreaker:
+    instances:
+      healthPlanner:
+        registerHealthIndicator: true
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        permittedNumberOfCallsInHalfOpenState: 3
+        waitDurationInOpenState: 5s
+        failureRateThreshold: 50
+      weather:
+        registerHealthIndicator: true
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        permittedNumberOfCallsInHalfOpenState: 3
+        waitDurationInOpenState: 5s
+        failureRateThreshold: 50
+
+logging:
+  level:
+    com.healthroute: DEBUG

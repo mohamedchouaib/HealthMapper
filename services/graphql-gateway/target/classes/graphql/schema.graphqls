@@ -1,0 +1,186 @@
+type Query {
+    """
+    Point d'entrée principal pour obtenir un plan d'itinéraire santé
+    """
+    healthPlan(input: HealthPlanInput!): HealthPlanResponse!
+}
+
+"""
+Input principal pour la requête d'itinéraire santé
+"""
+input HealthPlanInput {
+    # Origine et destination
+    origin: LocationInput!
+    destination: LocationInput!
+    
+    # Contraintes temporelles
+    departureTime: String  # ISO 8601 format ou "now"
+    
+    # Objectifs d'activité
+    goals: ActivityGoalsInput!
+    
+    # Contraintes de trajet
+    constraints: TripConstraintsInput!
+    
+    # Préférences
+    preferences: PreferencesInput
+}
+
+"""
+Localisation (coordonnées ou adresse)
+"""
+input LocationInput {
+    lat: Float
+    lon: Float
+    address: String
+}
+
+"""
+Objectifs d'activité physique
+"""
+input ActivityGoalsInput {
+    walkMinutes: Int!  # Minutes de marche souhaitées
+    bikeMinutes: Int   # Minutes de vélo (optionnel)
+}
+
+"""
+Contraintes de trajet
+"""
+input TripConstraintsInput {
+    maxTotalTimeMinutes: Int    # Temps total max
+    maxDetourDistanceKm: Float  # Détour max en km
+    maxDetourPercent: Int       # Détour max en %
+}
+
+"""
+Préférences utilisateur
+"""
+input PreferencesInput {
+    avoidRain: String           # "strict" / "flexible"
+    windTolerance: String       # "low" / "medium" / "high"
+    avoidStairs: Boolean
+    preferBikeParkings: Boolean
+}
+
+"""
+Réponse complète avec plan recommandé et alternatives
+"""
+type HealthPlanResponse {
+    # Plan sélectionné (peut être recommendedPlan ou fallbackPlan)
+    selectedPlan: Plan!
+    
+    # Plan santé recommandé (peut être null si météo bloque)
+    recommendedPlan: Plan
+    
+    # Plan de secours (itinéraire normal)
+    fallbackPlan: Plan!
+    
+    # Alternatives (autres plans santé possibles)
+    alternatives: [Plan!]!
+    
+    # Résumé météo
+    weatherSummary: WeatherSummary!
+    
+    # Alertes
+    alerts: [Alert!]!
+    
+    # Métriques d'évaluation
+    metrics: EvaluationMetrics!
+    
+    # Explication du choix
+    explanation: String!
+}
+
+"""
+Structure d'un plan d'itinéraire
+"""
+type Plan {
+    planType: PlanType!
+    totalDurationMinutes: Int!
+    totalDistanceKm: Float!
+    activity: ActivityMetrics!
+    segments: [Segment!]!
+    why: String!
+}
+
+enum PlanType {
+    HEALTH
+    NORMAL
+}
+
+"""
+Métriques d'activité d'un plan
+"""
+type ActivityMetrics {
+    walkMinutes: Int!
+    bikeMinutes: Int!
+}
+
+"""
+Segment d'un itinéraire
+"""
+type Segment {
+    mode: TravelMode!
+    from: Location!
+    to: Location!
+    durationMinutes: Int!
+    distanceKm: Float!
+    geometry: String  # Polyline (optionnel)
+}
+
+enum TravelMode {
+    WALK
+    BIKE
+    TRANSIT
+}
+
+"""
+Localisation
+"""
+type Location {
+    lat: Float!
+    lon: Float!
+    name: String
+}
+
+"""
+Résumé des conditions météo
+"""
+type WeatherSummary {
+    decision: WeatherDecision!
+    rainProbability: Int!      # Pourcentage
+    temperature: Float!        # Celsius
+    windSpeedKmh: Float!
+    conditions: String!        # Description textuelle
+}
+
+enum WeatherDecision {
+    OK
+    WARNING
+    BLOCK
+}
+
+"""
+Alerte pour l'utilisateur
+"""
+type Alert {
+    level: AlertLevel!
+    message: String!
+}
+
+enum AlertLevel {
+    INFO
+    WARNING
+    CRITICAL
+}
+
+"""
+Métriques d'évaluation du plan
+"""
+type EvaluationMetrics {
+    walkGoalAchieved: Boolean!
+    bikeGoalAchieved: Boolean!
+    totalDetourMinutes: Int!
+    totalDetourKm: Float!
+    score: Float!
+}
