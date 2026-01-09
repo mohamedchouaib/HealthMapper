@@ -239,8 +239,8 @@ L'implémentation du code doit être réalisée selon les étapes définies.
 - ✅ Architecture complète définie
 - ✅ Docker & docker-compose configurés
 - ✅ Schémas GraphQL et modèles de données
-- ⏳ Code Java (GraphQL Gateway) - Étapes en commentaires
-- ⏳ Code Python (4 services FastAPI) - Étapes en commentaires
+- ⏳ Code Java (GraphQL Gateway) - 
+- ⏳ Code Python (4 services FastAPI) - 
 
 ### Prochaines étapes
 1. Implémenter le code selon les étapes commentées
